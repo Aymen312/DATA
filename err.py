@@ -1,117 +1,71 @@
-import streamlit as st
 import fitz  # PyMuPDF
+import pandas as pd
 import pytesseract
-from pdf2image import convert_from_path
-import re
-from PIL import Image
+from pytesseract import Output
 
-# Fonction pour extraire le texte d'un PDF en utilisant l'OCR
-def extract_text_from_pdf_with_ocr(file_path):
-    # Convertir le PDF en images
-    images = convert_from_path(file_path)
-    
-    # Extraire le texte de chaque image
+# Configure pytesseract path if needed
+# pytesseract.pytesseract.tesseract_cmd = r'path_to_your_tesseract_executable'
+
+def extract_text_from_pdf(pdf_path):
+    document = fitz.open(pdf_path)
     text = ""
-    for image in images:
-        text += pytesseract.image_to_string(image, lang='fra')  # 'fra' pour le français
-    
+    for page_num in range(len(document)):
+        page = document.load_page(page_num)
+        text += page.get_text()
     return text
 
-# Fonction pour extraire les informations du texte
-def extract_info_from_text(text):
-    # Fonction pour extraire un texte basé sur un motif
-    def extract_value(pattern, text):
-        match = re.search(pattern, text, re.IGNORECASE)
-        return match.group(1).strip() if match else "Non trouvé"
+def extract_tables_from_text(text):
+    lines = text.split("\n")
+    first_table_data = []
+    small_table_data = []
+    in_first_table = False
+    in_small_table = False
 
-    # Extraction des informations
-    info = {
-        "client_name": extract_value(r"Nom\s*:\s*(.*)", text),
-        "client_address": extract_value(r"Adresse\s*:\s*(.*)", text),
-        "client_email": extract_value(r"Email\s*:\s*(.*)", text),
-        "client_code": extract_value(r"Code\s*client\s*:\s*(.*)", text),
-        "salesperson_name": extract_value(r"Commercial\s*:\s*(.*)", text),
-        "payment_method": extract_value(r"Mode\s*de\s*règlement\s*:\s*(.*)", text),
-        "invoice_date": extract_value(r"Date\s*:\s*(.*)", text),
-        "invoice_number": extract_value(r"Numéro\s*:\s*(.*)", text),
-        "due_date": extract_value(r"Date\s*d'échéance\s*:\s*(.*)", text),
-        "company_name": extract_value(r"Nom\s*:\s*(.*)", text),
-        "company_address": extract_value(r"Adresse\s*:\s*(.*)", text),
-        "company_phone": extract_value(r"Téléphone\s*:\s*(.*)", text),
-        "company_website": extract_value(r"Site\s*web\s*:\s*(.*)", text),
-        "items": extract_value(r"Détails\s*des\s*articles\s*facturés\s*(.*)", text),
-        "total_ht": extract_value(r"Total\s*HT\s*:\s*(.*)", text),
-        "total_tva": extract_value(r"Total\s*TVA\s*:\s*(.*)", text),
-        "total_ttc": extract_value(r"Total\s*TTC\s*:\s*(.*)", text),
-        "advance_payment": extract_value(r"Acomptes\s*:\s*(.*)", text),
-        "net_to_pay": extract_value(r"Net\s*à\s*payer\s*:\s*(.*)", text),
-        "balance_due": extract_value(r"Solde\s*dû\s*:\s*(.*)", text),
-        "penalty_interest": extract_value(r"Escompte\s*pour\s*règlement\s*anticipé\s*:\s*(.*)", text),
-        "collection_fee": extract_value(r"Indemnité\s*forfaitaire\s*pour\s*frais\s*de\s*recouvrement\s*:\s*(.*)", text),
-        "iban": extract_value(r"IBAN\s*:\s*(.*)", text),
-        "bic": extract_value(r"BIC\s*:\s*(.*)", text),
-    }
+    for line in lines:
+        if "Date" in line and "Numéro" in line:
+            in_first_table = True
+            in_small_table = False
+        elif "Solde dû" in line:
+            in_first_table = False
+            in_small_table = True
 
-    return info
+        if in_first_table:
+            first_table_data.append(line)
+        if in_small_table:
+            small_table_data.append(line)
 
-# Fonction pour afficher les informations extraites
-def display_info(info):
-    if info:
-        st.write("### Client Information")
-        st.write(f"**Nom :** {info['client_name']}")
-        st.write(f"**Adresse :** {info['client_address']}")
-        st.write(f"**Email :** {info['client_email']}")
-        st.write(f"**Code client :** {info['client_code']}")
-        st.write(f"**Commercial :** {info['salesperson_name']}")
+    return first_table_data, small_table_data
 
-        st.write("### Détails de la facture")
-        st.write(f"**Mode de règlement :** {info['payment_method']}")
-        st.write(f"**Date :** {info['invoice_date']}")
-        st.write(f"**Numéro :** {info['invoice_number']}")
-        st.write(f"**Date d'échéance :** {info['due_date']}")
+def parse_first_table(table_data):
+    columns = ["Date", "Numéro", "Date d'échéance", "Mode de règlement", "Code client", "N° de TVA intracom"]
+    data = []
 
-        st.write("### Entreprise")
-        st.write(f"**Nom :** {info['company_name']}")
-        st.write(f"**Adresse :** {info['company_address']}")
-        st.write(f"**Téléphone :** {info['company_phone']}")
-        st.write(f"**Site web :** {info['company_website']}")
+    for line in table_data:
+        if any(col in line for col in columns):
+            continue
+        if len(line.split()) > 5:
+            data.append(line.split())
 
-        st.write("### Détails des articles facturés")
-        st.write(info['items'])
+    df = pd.DataFrame(data, columns=columns)
+    return df
 
-        st.write("### Montants de la facture")
-        st.write(f"**Total HT :** {info['total_ht']}")
-        st.write(f"**Total TVA :** {info['total_tva']}")
-        st.write(f"**Total TTC :** {info['total_ttc']}")
-        st.write(f"**Acomptes :** {info['advance_payment']}")
-        st.write(f"**Net à payer :** {info['net_to_pay']}")
-        st.write(f"**Solde dû :** {info['balance_due']}")
+def parse_small_table(table_data):
+    for line in table_data:
+        if "€" in line:
+            solde_du = line.split()[-1]
+            return solde_du
 
-        st.write("### Informations complémentaires")
-        st.write(f"**Escompte pour règlement anticipé :** {info['penalty_interest']}")
-        st.write(f"**Pénalités de retard :** {info['penalty_interest']}")
-        st.write(f"**Indemnité forfaitaire pour frais de recouvrement :** {info['collection_fee']}")
+def main(pdf_path):
+    text = extract_text_from_pdf(pdf_path)
+    first_table_data, small_table_data = extract_tables_from_text(text)
+    first_table_df = parse_first_table(first_table_data)
+    solde_du = parse_small_table(small_table_data)
 
-        st.write("### Coordonnées bancaires")
-        st.write(f"**IBAN :** {info['iban']}")
-        st.write(f"**BIC :** {info['bic']}")
-    else:
-        st.write("Aucune information à afficher.")
-
-# Fonction principale de l'application
-def main():
-    st.title("Extracteur d'informations de facture PDF")
-
-    uploaded_file = st.file_uploader("Télécharger le fichier PDF", type="pdf")
-    if uploaded_file is not None:
-        with open("temp.pdf", "wb") as f:
-            f.write(uploaded_file.getbuffer())
-        st.success("Fichier téléchargé avec succès")
-
-        # Extraire le texte en utilisant l'OCR
-        text = extract_text_from_pdf_with_ocr("temp.pdf")
-        info = extract_info_from_text(text)
-        display_info(info)
+    print("Premier Tableau :")
+    print(first_table_df)
+    print("\nPetit Tableau :")
+    print(f"Solde dû : {solde_du}")
 
 if __name__ == "__main__":
-    main()
+    pdf_path = "path_to_your_pdf_file.pdf"
+    main(pdf_path)
