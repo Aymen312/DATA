@@ -10,7 +10,6 @@ except ImportError:
     import fitz
 
 def extract_info_from_pdf(file_path):
-    # Open the PDF file
     document = fitz.open(file_path)
     page = document.load_page(0)  # Load the first page
     text = page.get_text()
