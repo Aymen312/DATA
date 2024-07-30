@@ -8,87 +8,37 @@ def extract_info_from_pdf(file_path):
     page = document.load_page(0)  # Charger la première page
     text = page.get_text()
 
-    # Extraction des informations à l'aide des expressions régulières
-    info = {}
+    # Fonction pour extraire un texte basé sur un motif
+    def extract_value(pattern, text):
+        match = re.search(pattern, text)
+        return match.group(1) if match else "Non trouvé"
 
-    # Client Information
-    client_name = re.search(r"(?<=TDR LANDERNEAU\n).+?(?=\n)", text)
-    client_address = re.search(r"36 rue Hervé de Guébriant, 29800 LANDERNEAU", text)
-    client_email = re.search(r"[\w\.-]+@[\w\.-]+", text)
-    client_code = re.search(r"(?<=Code client\n).+?(?=\n)", text)
-
-    # Salesperson Information
-    salesperson_name = re.search(r"(?<=Commercial :\n).+?(?=\n)", text)
-
-    # Invoice Details
-    payment_method = re.search(r"(?<=Mode de règlement\n).+?(?=\n)", text)
-    invoice_date = re.search(r"(?<=Date\n).+?(?=\n)", text)
-    invoice_number = re.search(r"(?<=Numéro\n).+?(?=\n)", text)
-    due_date = re.search(r"(?<=Date échéance\n).+?(?=\n)", text)
-
-    # Company Information
-    company_name = re.search(r"SAS GROUPE TDR", text)
-    company_address = re.search(r"662 Rue des Jonchères\nActiparck de la Richassières - BAT F\n69730  GENAY", text)
-    company_phone = re.search(r"(?<=Tél :\n).+?(?=\n)", text)
-    company_website = re.search(r"terrederunning.com", text)
-
-    # Items
-    items = re.findall(r"FC \d{9}\d{5}", text)
-
-    item_details = []
-    for item in items:
-        description = item
-        quantity = re.search(r"(?<=1,00).+?(?=\n)", text)
-        unit_price = re.search(r"(?<=\d{2,},\d{2}).+?(?=\n)", text)
-        discount = re.search(r"20%", text)
-        amount_ht = re.search(r"(?<=\d{2,},\d{2}).+?(?=\n)", text)
-        item_details.append({
-            "description": description,
-            "quantity": quantity.group() if quantity else "",
-            "unit_price": unit_price.group() if unit_price else "",
-            "discount": discount.group() if discount else "",
-            "amount_ht": amount_ht.group() if amount_ht else ""
-        })
-
-    # Totals
-    total_ht = re.search(r"(?<=Total HT\n).+?(?=\n)", text)
-    total_tva = re.search(r"(?<=Total TVA\n).+?(?=\n)", text)
-    total_ttc = re.search(r"(?<=Total TTC\n).+?(?=\n)", text)
-    advance_payment = re.search(r"(?<=Acomptes\n).+?(?=\n)", text)
-    net_to_pay = re.search(r"(?<=Net à payer\n).+?(?=\n)", text)
-    balance_due = re.search(r"(?<=Solde dû\n).+?(?=\n)", text)
-
-    # Additional Information
-    penalty_interest = re.search(r"(?<=Pénalités de retard :\n).+?(?=\n)", text)
-    collection_fee = re.search(r"(?<=Indemnité forfaitaire pour frais de recouvrement :\n).+?(?=\n)", text)
-    iban = re.search(r"(?<=IBAN :\n).+?(?=\n)", text)
-    bic = re.search(r"(?<=BIC :\n).+?(?=\n)", text)
-
+    # Extraction des informations
     info = {
-        "client_name": client_name.group() if client_name else "",
-        "client_address": client_address.group() if client_address else "",
-        "client_email": client_email.group() if client_email else "",
-        "client_code": client_code.group() if client_code else "",
-        "salesperson_name": salesperson_name.group() if salesperson_name else "",
-        "payment_method": payment_method.group() if payment_method else "",
-        "invoice_date": invoice_date.group() if invoice_date else "",
-        "invoice_number": invoice_number.group() if invoice_number else "",
-        "due_date": due_date.group() if due_date else "",
-        "company_name": company_name.group() if company_name else "",
-        "company_address": company_address.group() if company_address else "",
-        "company_phone": company_phone.group() if company_phone else "",
-        "company_website": company_website.group() if company_website else "",
-        "items": item_details,
-        "total_ht": total_ht.group() if total_ht else "",
-        "total_tva": total_tva.group() if total_tva else "",
-        "total_ttc": total_ttc.group() if total_ttc else "",
-        "advance_payment": advance_payment.group() if advance_payment else "",
-        "net_to_pay": net_to_pay.group() if net_to_pay else "",
-        "balance_due": balance_due.group() if balance_due else "",
-        "penalty_interest": penalty_interest.group() if penalty_interest else "",
-        "collection_fee": collection_fee.group() if collection_fee else "",
-        "iban": iban.group() if iban else "",
-        "bic": bic.group() if bic else ""
+        "client_name": extract_value(r"(?<=Nom :\s)(.*?)(?=\n)", text),
+        "client_address": extract_value(r"(?<=Adresse :\s)(.*?)(?=\n)", text),
+        "client_email": extract_value(r"(?<=Email :\s)(.*?)(?=\n)", text),
+        "client_code": extract_value(r"(?<=Code client :\s)(.*?)(?=\n)", text),
+        "salesperson_name": extract_value(r"(?<=Commercial :\s)(.*?)(?=\n)", text),
+        "payment_method": extract_value(r"(?<=Mode de règlement :\s)(.*?)(?=\n)", text),
+        "invoice_date": extract_value(r"(?<=Date :\s)(.*?)(?=\n)", text),
+        "invoice_number": extract_value(r"(?<=Numéro :\s)(.*?)(?=\n)", text),
+        "due_date": extract_value(r"(?<=Date d'échéance :\s)(.*?)(?=\n)", text),
+        "company_name": extract_value(r"(?<=Nom :\s)(.*?)(?=\n)", text),
+        "company_address": extract_value(r"(?<=Adresse :\s)(.*?)(?=\n)", text),
+        "company_phone": extract_value(r"(?<=Téléphone :\s)(.*?)(?=\n)", text),
+        "company_website": extract_value(r"(?<=Site web :\s)(.*?)(?=\n)", text),
+        "items": extract_value(r"(?<=Détails des articles facturés)(.*?)(?=\n\n)", text),
+        "total_ht": extract_value(r"(?<=Total HT :\s)(.*?)(?=\n)", text),
+        "total_tva": extract_value(r"(?<=Total TVA :\s)(.*?)(?=\n)", text),
+        "total_ttc": extract_value(r"(?<=Total TTC :\s)(.*?)(?=\n)", text),
+        "advance_payment": extract_value(r"(?<=Acomptes :\s)(.*?)(?=\n)", text),
+        "net_to_pay": extract_value(r"(?<=Net à payer :\s)(.*?)(?=\n)", text),
+        "balance_due": extract_value(r"(?<=Solde dû :\s)(.*?)(?=\n)", text),
+        "penalty_interest": extract_value(r"(?<=Escompte pour règlement anticipé :\s)(.*?)(?=\n)", text),
+        "collection_fee": extract_value(r"(?<=Indemnité forfaitaire pour frais de recouvrement :\s)(.*?)(?=\n)", text),
+        "iban": extract_value(r"(?<=IBAN :\s)(.*?)(?=\n)", text),
+        "bic": extract_value(r"(?<=BIC :\s)(.*?)(?=\n)", text),
     }
 
     return info
@@ -116,12 +66,7 @@ def display_info(info):
         st.write(f"**Site web :** {info['company_website']}")
 
         st.write("### Détails des articles facturés")
-        for item in info['items']:
-            st.write(f"**Description :** {item['description']}")
-            st.write(f"**Quantité :** {item['quantity']}")
-            st.write(f"**Prix Unitaire HT :** {item['unit_price']}")
-            st.write(f"**Remise :** {item['discount']}")
-            st.write(f"**Montant HT :** {item['amount_ht']}")
+        st.write(info['items'])
 
         st.write("### Montants de la facture")
         st.write(f"**Total HT :** {info['total_ht']}")
