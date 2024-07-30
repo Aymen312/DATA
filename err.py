@@ -1,13 +1,24 @@
 import streamlit as st
 import fitz  # PyMuPDF
+import pytesseract
+from pdf2image import convert_from_path
 import re
+from PIL import Image
 
-# Fonction pour extraire les informations du PDF
-def extract_info_from_pdf(file_path):
-    document = fitz.open(file_path)
-    page = document.load_page(0)  # Charger la première page
-    text = page.get_text()
+# Fonction pour extraire le texte d'un PDF en utilisant l'OCR
+def extract_text_from_pdf_with_ocr(file_path):
+    # Convertir le PDF en images
+    images = convert_from_path(file_path)
+    
+    # Extraire le texte de chaque image
+    text = ""
+    for image in images:
+        text += pytesseract.image_to_string(image, lang='fra')  # 'fra' pour le français
+    
+    return text
 
+# Fonction pour extraire les informations du texte
+def extract_info_from_text(text):
     # Fonction pour extraire un texte basé sur un motif
     def extract_value(pattern, text):
         match = re.search(pattern, text, re.IGNORECASE)
@@ -97,7 +108,9 @@ def main():
             f.write(uploaded_file.getbuffer())
         st.success("Fichier téléchargé avec succès")
 
-        info = extract_info_from_pdf("temp.pdf")
+        # Extraire le texte en utilisant l'OCR
+        text = extract_text_from_pdf_with_ocr("temp.pdf")
+        info = extract_info_from_text(text)
         display_info(info)
 
 if __name__ == "__main__":
