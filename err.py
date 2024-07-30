@@ -10,35 +10,35 @@ def extract_info_from_pdf(file_path):
 
     # Fonction pour extraire un texte basé sur un motif
     def extract_value(pattern, text):
-        match = re.search(pattern, text)
-        return match.group(1) if match else "Non trouvé"
+        match = re.search(pattern, text, re.IGNORECASE)
+        return match.group(1).strip() if match else "Non trouvé"
 
     # Extraction des informations
     info = {
-        "client_name": extract_value(r"(?<=Nom :\s)(.*?)(?=\n)", text),
-        "client_address": extract_value(r"(?<=Adresse :\s)(.*?)(?=\n)", text),
-        "client_email": extract_value(r"(?<=Email :\s)(.*?)(?=\n)", text),
-        "client_code": extract_value(r"(?<=Code client :\s)(.*?)(?=\n)", text),
-        "salesperson_name": extract_value(r"(?<=Commercial :\s)(.*?)(?=\n)", text),
-        "payment_method": extract_value(r"(?<=Mode de règlement :\s)(.*?)(?=\n)", text),
-        "invoice_date": extract_value(r"(?<=Date :\s)(.*?)(?=\n)", text),
-        "invoice_number": extract_value(r"(?<=Numéro :\s)(.*?)(?=\n)", text),
-        "due_date": extract_value(r"(?<=Date d'échéance :\s)(.*?)(?=\n)", text),
-        "company_name": extract_value(r"(?<=Nom :\s)(.*?)(?=\n)", text),
-        "company_address": extract_value(r"(?<=Adresse :\s)(.*?)(?=\n)", text),
-        "company_phone": extract_value(r"(?<=Téléphone :\s)(.*?)(?=\n)", text),
-        "company_website": extract_value(r"(?<=Site web :\s)(.*?)(?=\n)", text),
-        "items": extract_value(r"(?<=Détails des articles facturés)(.*?)(?=\n\n)", text),
-        "total_ht": extract_value(r"(?<=Total HT :\s)(.*?)(?=\n)", text),
-        "total_tva": extract_value(r"(?<=Total TVA :\s)(.*?)(?=\n)", text),
-        "total_ttc": extract_value(r"(?<=Total TTC :\s)(.*?)(?=\n)", text),
-        "advance_payment": extract_value(r"(?<=Acomptes :\s)(.*?)(?=\n)", text),
-        "net_to_pay": extract_value(r"(?<=Net à payer :\s)(.*?)(?=\n)", text),
-        "balance_due": extract_value(r"(?<=Solde dû :\s)(.*?)(?=\n)", text),
-        "penalty_interest": extract_value(r"(?<=Escompte pour règlement anticipé :\s)(.*?)(?=\n)", text),
-        "collection_fee": extract_value(r"(?<=Indemnité forfaitaire pour frais de recouvrement :\s)(.*?)(?=\n)", text),
-        "iban": extract_value(r"(?<=IBAN :\s)(.*?)(?=\n)", text),
-        "bic": extract_value(r"(?<=BIC :\s)(.*?)(?=\n)", text),
+        "client_name": extract_value(r"Nom\s*:\s*(.*)", text),
+        "client_address": extract_value(r"Adresse\s*:\s*(.*)", text),
+        "client_email": extract_value(r"Email\s*:\s*(.*)", text),
+        "client_code": extract_value(r"Code\s*client\s*:\s*(.*)", text),
+        "salesperson_name": extract_value(r"Commercial\s*:\s*(.*)", text),
+        "payment_method": extract_value(r"Mode\s*de\s*règlement\s*:\s*(.*)", text),
+        "invoice_date": extract_value(r"Date\s*:\s*(.*)", text),
+        "invoice_number": extract_value(r"Numéro\s*:\s*(.*)", text),
+        "due_date": extract_value(r"Date\s*d'échéance\s*:\s*(.*)", text),
+        "company_name": extract_value(r"Nom\s*:\s*(.*)", text),
+        "company_address": extract_value(r"Adresse\s*:\s*(.*)", text),
+        "company_phone": extract_value(r"Téléphone\s*:\s*(.*)", text),
+        "company_website": extract_value(r"Site\s*web\s*:\s*(.*)", text),
+        "items": extract_value(r"Détails\s*des\s*articles\s*facturés\s*(.*)", text),
+        "total_ht": extract_value(r"Total\s*HT\s*:\s*(.*)", text),
+        "total_tva": extract_value(r"Total\s*TVA\s*:\s*(.*)", text),
+        "total_ttc": extract_value(r"Total\s*TTC\s*:\s*(.*)", text),
+        "advance_payment": extract_value(r"Acomptes\s*:\s*(.*)", text),
+        "net_to_pay": extract_value(r"Net\s*à\s*payer\s*:\s*(.*)", text),
+        "balance_due": extract_value(r"Solde\s*dû\s*:\s*(.*)", text),
+        "penalty_interest": extract_value(r"Escompte\s*pour\s*règlement\s*anticipé\s*:\s*(.*)", text),
+        "collection_fee": extract_value(r"Indemnité\s*forfaitaire\s*pour\s*frais\s*de\s*recouvrement\s*:\s*(.*)", text),
+        "iban": extract_value(r"IBAN\s*:\s*(.*)", text),
+        "bic": extract_value(r"BIC\s*:\s*(.*)", text),
     }
 
     return info
