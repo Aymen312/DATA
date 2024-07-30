@@ -8,36 +8,87 @@ def extract_info_from_pdf(file_path):
     page = document.load_page(0)  # Charger la première page
     text = page.get_text()
 
+    # Extraction des informations à l'aide des expressions régulières
+    info = {}
+
+    # Client Information
+    client_name = re.search(r"(?<=TDR LANDERNEAU\n).+?(?=\n)", text)
+    client_address = re.search(r"36 rue Hervé de Guébriant, 29800 LANDERNEAU", text)
+    client_email = re.search(r"[\w\.-]+@[\w\.-]+", text)
+    client_code = re.search(r"(?<=Code client\n).+?(?=\n)", text)
+
+    # Salesperson Information
+    salesperson_name = re.search(r"(?<=Commercial :\n).+?(?=\n)", text)
+
+    # Invoice Details
+    payment_method = re.search(r"(?<=Mode de règlement\n).+?(?=\n)", text)
+    invoice_date = re.search(r"(?<=Date\n).+?(?=\n)", text)
+    invoice_number = re.search(r"(?<=Numéro\n).+?(?=\n)", text)
+    due_date = re.search(r"(?<=Date échéance\n).+?(?=\n)", text)
+
+    # Company Information
+    company_name = re.search(r"SAS GROUPE TDR", text)
+    company_address = re.search(r"662 Rue des Jonchères\nActiparck de la Richassières - BAT F\n69730  GENAY", text)
+    company_phone = re.search(r"(?<=Tél :\n).+?(?=\n)", text)
+    company_website = re.search(r"terrederunning.com", text)
+
+    # Items
+    items = re.findall(r"FC \d{9}\d{5}", text)
+
+    item_details = []
+    for item in items:
+        description = item
+        quantity = re.search(r"(?<=1,00).+?(?=\n)", text)
+        unit_price = re.search(r"(?<=\d{2,},\d{2}).+?(?=\n)", text)
+        discount = re.search(r"20%", text)
+        amount_ht = re.search(r"(?<=\d{2,},\d{2}).+?(?=\n)", text)
+        item_details.append({
+            "description": description,
+            "quantity": quantity.group() if quantity else "",
+            "unit_price": unit_price.group() if unit_price else "",
+            "discount": discount.group() if discount else "",
+            "amount_ht": amount_ht.group() if amount_ht else ""
+        })
+
+    # Totals
+    total_ht = re.search(r"(?<=Total HT\n).+?(?=\n)", text)
+    total_tva = re.search(r"(?<=Total TVA\n).+?(?=\n)", text)
+    total_ttc = re.search(r"(?<=Total TTC\n).+?(?=\n)", text)
+    advance_payment = re.search(r"(?<=Acomptes\n).+?(?=\n)", text)
+    net_to_pay = re.search(r"(?<=Net à payer\n).+?(?=\n)", text)
+    balance_due = re.search(r"(?<=Solde dû\n).+?(?=\n)", text)
+
+    # Additional Information
+    penalty_interest = re.search(r"(?<=Pénalités de retard :\n).+?(?=\n)", text)
+    collection_fee = re.search(r"(?<=Indemnité forfaitaire pour frais de recouvrement :\n).+?(?=\n)", text)
+    iban = re.search(r"(?<=IBAN :\n).+?(?=\n)", text)
+    bic = re.search(r"(?<=BIC :\n).+?(?=\n)", text)
+
     info = {
-        "client_name": "TDR LANDERNEAU",
-        "client_address": "36 rue Hervé de Guébriant, 29800 LANDERNEAU",
-        "client_email": "stephane.com@terrederunning.com",
-        "client_code": "CL00109",
-        "salesperson_name": "COLOMBAN Estelle",
-        "payment_method": "Prélev à 60 jours fin de mois",
-        "invoice_date": "29/07/2024",
-        "invoice_number": "02-F2405442",
-        "due_date": "30/09/2024",
-        "company_name": "SAS GROUPE TDR",
-        "company_address": "662 Rue des Jonchères, Actiparck de la Richassières - BAT F, 69730 GENAY",
-        "company_phone": "04 74 70 72 04",
-        "company_website": "terrederunning.com",
-        "items": [
-            {"description": "FC 51100293400", "quantity": "1,00", "unit_price": "154,80", "discount": "20%", "amount_ht": "154,80"},
-            {"description": "FC 51100293914", "quantity": "1,00", "unit_price": "129,00", "discount": "20%", "amount_ht": "129,00"},
-            {"description": "FC 51100293990", "quantity": "1,00", "unit_price": "154,80", "discount": "20%", "amount_ht": "154,80"},
-            {"description": "FC 51100298321", "quantity": "1,00", "unit_price": "262,30", "discount": "20%", "amount_ht": "262,30"}
-        ],
-        "total_ht": "700,90 €",
-        "total_tva": "140,18 €",
-        "total_ttc": "841,08 €",
-        "advance_payment": "0,00 €",
-        "net_to_pay": "841,08 €",
-        "balance_due": "841,08 €",
-        "penalty_interest": "3 fois le taux d'intérêt légal",
-        "collection_fee": "40 euros",
-        "iban": "FR76 3000 4019 8100 0100 4772 290",
-        "bic": "BNPAFRPPTAS"
+        "client_name": client_name.group() if client_name else "",
+        "client_address": client_address.group() if client_address else "",
+        "client_email": client_email.group() if client_email else "",
+        "client_code": client_code.group() if client_code else "",
+        "salesperson_name": salesperson_name.group() if salesperson_name else "",
+        "payment_method": payment_method.group() if payment_method else "",
+        "invoice_date": invoice_date.group() if invoice_date else "",
+        "invoice_number": invoice_number.group() if invoice_number else "",
+        "due_date": due_date.group() if due_date else "",
+        "company_name": company_name.group() if company_name else "",
+        "company_address": company_address.group() if company_address else "",
+        "company_phone": company_phone.group() if company_phone else "",
+        "company_website": company_website.group() if company_website else "",
+        "items": item_details,
+        "total_ht": total_ht.group() if total_ht else "",
+        "total_tva": total_tva.group() if total_tva else "",
+        "total_ttc": total_ttc.group() if total_ttc else "",
+        "advance_payment": advance_payment.group() if advance_payment else "",
+        "net_to_pay": net_to_pay.group() if net_to_pay else "",
+        "balance_due": balance_due.group() if balance_due else "",
+        "penalty_interest": penalty_interest.group() if penalty_interest else "",
+        "collection_fee": collection_fee.group() if collection_fee else "",
+        "iban": iban.group() if iban else "",
+        "bic": bic.group() if bic else ""
     }
 
     return info
