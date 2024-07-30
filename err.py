@@ -1,15 +1,8 @@
 import streamlit as st
-import subprocess
-import sys
-
-# Installer pymupdf si ce n'est pas déjà fait
-try:
-    import fitz
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "pymupdf"])
-    import fitz
+import fitz  # PyMuPDF
 
 def extract_info_from_pdf(file_path):
+    # Open the PDF file
     document = fitz.open(file_path)
     page = document.load_page(0)  # Load the first page
     text = page.get_text()
@@ -90,44 +83,41 @@ def extract_info_from_pdf(file_path):
     return info
 
 def display_info(info):
-    if info:
-        st.write("### Client Information")
-        st.write(f"**Name:** {info['client_name']}")
-        st.write(f"**Address:** {info['client_address']}")
-        st.write(f"**Email:** {info['client_email']}")
-        st.write(f"**Client Code:** {info['client_code']}")
-        st.write(f"**Salesperson:** {info['salesperson_name']}")
-        
-        st.write("### Invoice Information")
-        st.write(f"**Payment Method:** {info['payment_method']}")
-        st.write(f"**Invoice Date:** {info['invoice_date']}")
-        st.write(f"**Invoice Number:** {info['invoice_number']}")
-        st.write(f"**Due Date:** {info['due_date']}")
+    st.write("### Client Information")
+    st.write(f"**Name:** {info['client_name']}")
+    st.write(f"**Address:** {info['client_address']}")
+    st.write(f"**Email:** {info['client_email']}")
+    st.write(f"**Client Code:** {info['client_code']}")
+    st.write(f"**Salesperson:** {info['salesperson_name']}")
+    
+    st.write("### Invoice Information")
+    st.write(f"**Payment Method:** {info['payment_method']}")
+    st.write(f"**Invoice Date:** {info['invoice_date']}")
+    st.write(f"**Invoice Number:** {info['invoice_number']}")
+    st.write(f"**Due Date:** {info['due_date']}")
 
-        st.write("### Company Information")
-        st.write(f"**Name:** {info['company_name']}")
-        st.write(f"**Address:** {info['company_address']}")
-        st.write(f"**Phone:** {info['company_phone']}")
-        st.write(f"**Website:** {info['company_website']}")
+    st.write("### Company Information")
+    st.write(f"**Name:** {info['company_name']}")
+    st.write(f"**Address:** {info['company_address']}")
+    st.write(f"**Phone:** {info['company_phone']}")
+    st.write(f"**Website:** {info['company_website']}")
 
-        st.write("### Items")
-        for item in info['items']:
-            st.write(f"**Description:** {item['description']}")
-            st.write(f"**Quantity:** {item['quantity']}")
-            st.write(f"**Unit Price:** {item['unit_price']}")
-            st.write(f"**Amount HT:** {item['amount_ht']}")
+    st.write("### Items")
+    for item in info['items']:
+        st.write(f"**Description:** {item['description']}")
+        st.write(f"**Quantity:** {item['quantity']}")
+        st.write(f"**Unit Price:** {item['unit_price']}")
+        st.write(f"**Amount HT:** {item['amount_ht']}")
 
-        st.write("### Totals")
-        st.write(f"**Total HT:** {info['total_ht']}")
-        st.write(f"**Total TVA:** {info['total_tva']}")
-        st.write(f"**Total TTC:** {info['total_ttc']}")
-        st.write(f"**Net to Pay:** {info['account_balance']}")
+    st.write("### Totals")
+    st.write(f"**Total HT:** {info['total_ht']}")
+    st.write(f"**Total TVA:** {info['total_tva']}")
+    st.write(f"**Total TTC:** {info['total_ttc']}")
+    st.write(f"**Net to Pay:** {info['account_balance']}")
 
-        st.write("### Bank Details")
-        st.write(f"**IBAN:** {info['iban']}")
-        st.write(f"**BIC:** {info['bic']}")
-    else:
-        st.write("No information to display.")
+    st.write("### Bank Details")
+    st.write(f"**IBAN:** {info['iban']}")
+    st.write(f"**BIC:** {info['bic']}")
 
 def main():
     st.title("PDF Invoice Information Extractor")
